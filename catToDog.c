@@ -22,11 +22,29 @@ void main()
     printf("Number of words edited: %i \nThe text: %s", count, text);
 }
 
+// Return the found string (insensitve)
+char *strcase(char *text, char *toFind)
+{
+    char *found = NULL;
+    int j;
+    
+    for (int i = 0; text[i] != '\0'; i++)
+    {
+        found = &text[i];
+        for (j = 0; tolower(toFind[j]) == tolower(text[i+j]); j++);
+
+        if (toFind[j] == '\0')
+            return found;
+    }
+
+    return NULL;
+}
+
 // Search for a word in a text returns the address of first letter of the word
 char *search_for_word(char text[], char word[])
 {
     const unsigned char length_of_word = strlen(word);
-    char *first_char_adress = strstr(text, word);
+    char *first_char_adress = strcase(text, word);
     
     while (first_char_adress != NULL)
     {
@@ -36,7 +54,7 @@ char *search_for_word(char text[], char word[])
             return first_char_adress;
         }
         
-        first_char_adress = strstr(first_char_adress + 1, word);
+        first_char_adress = strcase(first_char_adress + 1, word);
     }
     
     return NULL;
