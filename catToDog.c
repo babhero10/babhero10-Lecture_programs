@@ -31,6 +31,7 @@ char *strcase(char *text, char *toFind)
     for (int i = 0; text[i] != '\0'; i++)
     {
         found = &text[i];
+
         for (j = 0; tolower(toFind[j]) == tolower(text[i+j]); j++);
 
         if (toFind[j] == '\0')
