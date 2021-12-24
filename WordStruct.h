@@ -1,6 +1,4 @@
-
-
-#define LENGTH_OF_WORD 45
+#define LENGTH_OF_WORD 46
 
 typedef struct Word
 {
