@@ -9,26 +9,33 @@
 #include <ctype.h>
 #include "WordStruct.h"
 
+
 void transTextToList(char text[], Word **first_word);
 int findAndReplace(Word *first_word, char find[], char replace[]);
 void showText(Word *first_word);
 void freeText(Word *first_word);
 void deleteWord(Word **first_word, char *word);
 int addWordPos(Word **first_word, char toFind[], char word[], unsigned char pos);
-// void initFile(FILE **file, char filename[], Word **first_word);
+void initFile(FILE **file, char filename[], Word **first_word);
+void saveFile(FILE **file, Word *first_word, char filename[]);
+
 
 void main()
 {
     char text[1000];
-    printf("Enter a Text: ");
-    gets(text);
+    char filename[256] = "text.txt";
+    // printf("Enter a Text: ");
+    // gets(text);
 
     Word *first_word;
-    // FILE *file;
-    // initFile(&file, "text.txt", &first_word);
-    // showText(first_word);
-    transTextToList(text, &first_word);
+
+    FILE *file;
+
+    initFile(&file, filename, &first_word);
     showText(first_word);
+
+    // transTextToList(text, &first_word);
+    // showText(first_word);
     addWordPos(&first_word, "hi", "bye", 'a');
     showText(first_word);
     addWordPos(&first_word, "bye2", "hi2", 'b');
@@ -37,6 +44,7 @@ void main()
     showText(first_word);
     deleteWord(&first_word, "bye");
     showText(first_word);
+    saveFile(&file, first_word, "out.txt");
     freeText(first_word);
 }
 
@@ -97,8 +105,8 @@ void transTextToList(char text[], Word **first_word)
         last_word->nextWord = addWord(token);
         last_word = last_word->nextWord;
 
-        if ((*first_word)->nextWord == NULL)
-            (*first_word)->nextWord = last_word;
+        // if ((*first_word)->nextWord == NULL)
+        //     (*first_word)->nextWord = last_word;
         token = strtok(NULL, " ");
     }
 }
@@ -195,29 +203,40 @@ int addWordPos(Word **first_word, char toFind[], char word[], unsigned char pos)
 }
 
 /* Files */
-// void initFile(FILE **file, char filename[], Word **first_word)
-// {
-//     *file = fopen(filename, "r");
+void initFile(FILE **file, char filename[], Word **first_word)
+{
+    initText(first_word);
 
-//     if (*file == NULL)
-//     {
-//         *file = fopen(filename, "w");
-//         initText(first_word);
-//         return;  
-//     }
+    *file = fopen(filename, "r");
 
-//     Word *last_word = *first_word;
+    if (*file == NULL)
+        return;  
 
-//     fscanf(*file, " %1023s", (*first_word)->word);
-//     char word[LENGTH_OF_WORD];
-//     while (fscanf(*file, " %1023s", word) == 1)
-//     {
-//         last_word->nextWord = addWord(word);
-//         last_word = last_word->nextWord;
+    Word *last_word = *first_word;
+    char word[LENGTH_OF_WORD];
 
-//         if ((*first_word)->nextWord == NULL)
-//             (*first_word)->nextWord = last_word;
-//     }
+    fscanf(*file, " %1023s", word);
 
+    strcpy((*first_word)->word, word);
 
-// }
+    while (fscanf(*file, " %1023s", word) == 1)
+    {
+        last_word->nextWord = addWord(word);
+        last_word = last_word->nextWord;
+    }
+    fclose(*file);
+}
+
+void saveFile(FILE **file, Word *first_word, char filename[])
+{
+    *file = fopen(filename, "w");
+    for (Word *i = first_word; i != NULL;)
+    {
+        Word *temp = i->nextWord;
+        fputs(i->word, *file);
+        fputs(" ", *file);
+        i = temp;
+    }
+    fclose(*file);
+
+}
