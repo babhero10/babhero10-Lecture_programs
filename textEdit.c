@@ -9,43 +9,25 @@
 #include <ctype.h>
 #include "WordStruct.h"
 
+void startMenu(Word **first_word);
+void editMenu(Word **first_word);
+unsigned char initFile(char filename[], Word **first_word);
 
-void transTextToList(char text[], Word **first_word);
-int findAndReplace(Word *first_word, char find[], char replace[]);
-void showText(Word *first_word);
-void freeText(Word *first_word);
-void deleteWord(Word **first_word, char *word);
-int addWordPos(Word **first_word, char toFind[], char word[], unsigned char pos);
-void initFile(FILE **file, char filename[], Word **first_word);
-void saveFile(FILE **file, Word *first_word, char filename[]);
-
-
-void main()
+void main(int argc, char *argv[])
 {
-    char text[1000];
-    char filename[256] = "text.txt";
-    // printf("Enter a Text: ");
-    // gets(text);
-
     Word *first_word;
-
-    FILE *file;
-
-    initFile(&file, filename, &first_word);
-    showText(first_word);
-
-    // transTextToList(text, &first_word);
-    // showText(first_word);
-    addWordPos(&first_word, "hi", "bye", 'a');
-    showText(first_word);
-    addWordPos(&first_word, "bye2", "hi2", 'b');
-    showText(first_word);
-    findAndReplace(first_word, "hi", "bye");
-    showText(first_word);
-    deleteWord(&first_word, "bye");
-    showText(first_word);
-    saveFile(&file, first_word, "out.txt");
-    freeText(first_word);
+        
+    if (argc == 2)
+    {
+        if (!initFile(argv[1], &first_word))
+            startMenu(&first_word);
+        else
+            editMenu(&first_word);
+    }
+    else
+    {
+        startMenu(&first_word);
+    }
 }
 
 /* Linked List */
@@ -128,9 +110,10 @@ int findAndReplace(Word *first_word, char find[], char replace[])
     return counter;
 }
 
-// Delete word
-void deleteWord(Word **first_word, char *word)
+// Returns number of words deleted
+int deleteWord(Word **first_word, char *word)
 {
+    int counter = 0;
     Word *prevWord = *first_word;
     for (Word *i = *first_word; i != NULL; )
     {
@@ -147,7 +130,7 @@ void deleteWord(Word **first_word, char *word)
             {
                 free(i);
                 prevWord->nextWord = NULL;
-                return;
+                break;
             }
             else 
             {
@@ -155,6 +138,7 @@ void deleteWord(Word **first_word, char *word)
                 free(i);
                 i = prevWord->nextWord;
             }
+            counter++;
         }
         else 
         {
@@ -162,12 +146,14 @@ void deleteWord(Word **first_word, char *word)
             i = prevWord->nextWord;
         }
     }
+    return counter;
 }
 
 // Returns number of words added (before(b) or after(a))
 int addWordPos(Word **first_word, char toFind[], char word[], unsigned char pos)
 {
     pos = tolower(pos);
+    int counter = 0;
     Word *prevWord = *first_word;
     for (Word *i = *first_word; i != NULL; )
     {
@@ -195,48 +181,235 @@ int addWordPos(Word **first_word, char toFind[], char word[], unsigned char pos)
                     prevWord->nextWord->nextWord = temp;
                 }
             }
+            counter++;
         }
 
         prevWord = i;
         i = prevWord->nextWord;
     }
+
+    return counter;
 }
 
 /* Files */
-void initFile(FILE **file, char filename[], Word **first_word)
+unsigned char initFile(char filename[], Word **first_word)
 {
     initText(first_word);
+    FILE *file;
+    file = fopen(filename, "r");
 
-    *file = fopen(filename, "r");
-
-    if (*file == NULL)
-        return;  
+    if (file == NULL)
+    {
+        printf("\nCan't find the file.\n\n");
+        return 0;  
+    }
 
     Word *last_word = *first_word;
     char word[LENGTH_OF_WORD];
 
-    fscanf(*file, " %1023s", word);
+    fscanf(file, " %1023s", word);
 
     strcpy((*first_word)->word, word);
 
-    while (fscanf(*file, " %1023s", word) == 1)
+    while (fscanf(file, " %1023s", word) == 1)
     {
         last_word->nextWord = addWord(word);
         last_word = last_word->nextWord;
     }
-    fclose(*file);
+    fclose(file);
+
+    return 1;
 }
 
-void saveFile(FILE **file, Word *first_word, char filename[])
+void saveFile(Word *first_word, char filename[])
 {
-    *file = fopen(filename, "w");
+    FILE *file;
+    file = fopen(filename, "w");
     for (Word *i = first_word; i != NULL;)
     {
         Word *temp = i->nextWord;
-        fputs(i->word, *file);
-        fputs(" ", *file);
+        fputs(i->word, file);
+        fputs(" ", file);
         i = temp;
     }
-    fclose(*file);
+    fclose(file);
+    printf("\nFile Saved!\n\n");
+}
+
+/* Menu */
+void fileMenu(Word **first_word)
+{
+    char fileLocation[50];
+    printf("-- Open file --\n");
+    printf("Enter file location (e to exit): ");
+    scanf("%s", fileLocation);
+    
+    if (strcmp(fileLocation, "e") == 0 || strcmp(fileLocation, "E") == 0)
+    {
+        startMenu(first_word);
+        return;
+    }
+
+    if (!initFile(fileLocation, first_word))
+    {
+        startMenu(first_word);
+        return;
+    }
+
+    editMenu(first_word);
+}
+
+void enterTextMenu(Word **first_word)
+{
+    char text[1000];
+    printf("-- Enter text --\n");
+    printf("Enter the text (e to exit): ");
+    getchar();
+    gets(text);
+    
+    if (strcmp(text, "e") == 0 || strcmp(text, "E") == 0)
+    {
+        startMenu(first_word);
+        return;
+    }
+    transTextToList(text, first_word);
+    editMenu(first_word);
+}
+
+void findAndReplaceMenu(Word **first_word)
+{
+    char find[LENGTH_OF_WORD], replace[LENGTH_OF_WORD];
+    printf("Enter word to find and then the word to replace with: ");
+    scanf("%s%s", find, replace);
+    printf("Number of words infected: %d\n", findAndReplace(*first_word, find, replace));
+    
+}
+
+void addWordMenu(Word **first_word)
+{
+    char find[LENGTH_OF_WORD], word[LENGTH_OF_WORD], pos;
+    printf("Enter word to find and then the word you want to add: ");
+    scanf("%s%s", find, word);
+    getchar();
+    do 
+    {
+        printf("Enter a to add the word After or b to add the word before: ");
+        scanf("%c", &pos);
+    } while (toupper(pos) != 'A' && toupper(pos) != 'B');
+    
+    printf("Number of words infected: %d\n", addWordPos(first_word, find, word, pos));
+}
+
+void deleteMenu(Word **first_word)
+{
+    char word[LENGTH_OF_WORD];
+    printf("Enter the word to delete: ");
+    scanf("%s", word);
+    printf("Number of words infected: %d\n", deleteWord(first_word, word));
+}
+
+void saveFileMenu(Word **first_word)
+{
+    char filename[100];
+    printf("Enter file name: ");
+    scanf("%s", filename);
+    strcat(filename, ".txt");
+    saveFile(*first_word, filename);
+}
+
+void editMenu(Word **first_word)
+{
+    printf("-- Edit menu --\n");
+    printf("1 - Find and replace\n");
+    printf("2 - Add word.\n");
+    printf("3 - Delete word.\n");
+    printf("4 - Save changes.\n");
+    printf("5 - Show text.\n");
+    printf("6 - Back.\n");
+
+    unsigned char selected = 0;
+    while (selected > 6 || selected < 1)
+    {
+        printf("Select: ");
+        scanf("%d", &selected);
+    }
+    
+
+    switch (selected)
+    {
+        case 1:
+            findAndReplaceMenu(first_word);
+            editMenu(first_word);
+            break;
+        
+        case 2:
+            addWordMenu(first_word);
+            editMenu(first_word);
+            break;
+        
+        case 3:
+            deleteMenu(first_word);
+            editMenu(first_word);
+            break;
+        
+        case 4:
+            saveFileMenu(first_word);
+            editMenu(first_word);
+            break;
+
+        case 5:
+            getchar();
+            printf("\n");
+            showText(*first_word);
+            printf("\n");
+            editMenu(first_word);
+            break;
+        case 6:
+            startMenu(first_word);
+            break;
+        
+        default:
+            break;
+    }
+}
+
+void selectControl(Word **first_word)
+{
+    unsigned char selected = 0;
+    while (selected > 4 || selected < 1)
+    {
+        printf("Enter your choose: ");
+        scanf("%d", &selected);
+    }
+    
+    switch (selected)
+    {
+        case 1:
+            fileMenu(first_word);
+            break;
+        case 2:
+            enterTextMenu(first_word);
+            break;
+        case 3:
+            printf("\nText Edit c program programmed by Abdallah Elsayed.\n\n");
+            startMenu(first_word);
+            break;
+        case 4:
+            printf("\nThank you!\n\n");
+            exit(0);
+            break;
+    }
 
 }
+
+void startMenu(Word **first_word)
+{
+    printf("-- Welcome to Text Edit --\n");
+    printf("1 - Open file.\n");
+    printf("2 - Enter text.\n");
+    printf("3 - About.\n");
+    printf("4 - Exit.\n");
+
+    selectControl(first_word);
+}
+
