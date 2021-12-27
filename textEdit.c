@@ -7,7 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "WordStruct.h"
+
+#define LENGTH_OF_WORD 46
+
+typedef struct Word
+{
+    char word[LENGTH_OF_WORD];
+    struct Word *nextWord;
+} Word;
 
 void startMenu(Word **first_word);
 void editMenu(Word **first_word);
