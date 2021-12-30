@@ -35,6 +35,7 @@ void main(int argc, char *argv[])
     {
         startMenu(&first_word);
     }
+    freeText(first_word);
 }
 
 /* Linked List */
