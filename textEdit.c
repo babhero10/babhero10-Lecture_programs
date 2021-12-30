@@ -35,7 +35,6 @@ void main(int argc, char *argv[])
     {
         startMenu(&first_word);
     }
-    freeText(first_word);
 }
 
 /* Linked List */
@@ -404,6 +403,7 @@ void selectControl(Word **first_word)
             break;
         case 4:
             printf("\nThank you!\n\n");
+            freeText(first_word);
             exit(0);
             break;
     }
